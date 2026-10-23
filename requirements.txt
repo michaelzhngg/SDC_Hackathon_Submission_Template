@@ -1,2 +1,2 @@
-# Add your project dependencies here, one per line.
-runpod
+Flask==3.1.2
+requests==2.32.5

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Case #{{ case.id }} · Vortex OrderGuard{% endblock %}
+{% block content %}
+{% set gate = case.comparison.trust_gate %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div><a class="small text-decoration-none" href="{{ url_for('dashboard') }}">← Dashboard</a><h1 class="h3 mt-2 mb-1">Case #{{ case.id }}</h1><span class="text-secondary">{{ case.supplier_name }} · {{ case.status.replace('_',' ') }}</span></div>
+  <span class="trust-pill trust-{{ gate.level|lower }} fs-6">{{ gate.score }} · {{ gate.level }}</span>
+</div>
+
+<div class="trust-panel trust-panel-{{ gate.level|lower }} mb-4">
+  <div class="row align-items-center g-3"><div class="col-md-3"><div class="eyebrow">ORDERGUARD TRUST GATE</div><div class="display-6 fw-bold">{{ gate.score }}/100</div></div><div class="col-md-9"><h2 class="h5">{{ 'Action blocked' if gate.level == 'BLOCKED' else 'Owner review allowed' if gate.level == 'REVIEW' else 'No action required' }}</h2>{% for reason in gate.reasons %}<div class="small mb-1">• {{ reason }}</div>{% endfor %}</div></div>
+</div>
+
+<div class="card mb-4 shadow-sm border-0">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center py-3"><span class="fw-semibold">Supplier Pattern Memory</span>{% if supplier_insight.repeat_issue %}<span class="badge text-bg-warning">Repeat issue detected</span>{% else %}<span class="badge text-bg-light border">No repeat pattern yet</span>{% endif %}</div>
+  <div class="card-body">
+    <div class="row g-3 align-items-stretch">
+      <div class="col-md-3"><div class="evidence-box"><span>Supplier</span><strong>{{ supplier_insight.supplier_name }}</strong><small>{{ supplier_insight.item }}</small></div></div>
+      <div class="col-md-3"><div class="evidence-box"><span>Prior exceptions</span><strong>{{ supplier_insight.previous_exception_cases }}</strong><small>Same supplier + item only</small></div></div>
+      <div class="col-md-3"><div class="evidence-box"><span>Money at risk</span><strong>RM{{ '%.2f'|format(supplier_insight.money_at_risk) }}</strong><small>Current case comparison only</small></div></div>
+      <div class="col-md-3"><div class="evidence-box"><span>Recurring types</span><strong>{{ supplier_insight.recurring_types|length }}</strong><small>{% if supplier_insight.recurring_types %}{{ supplier_insight.recurring_types|join(', ')|replace('_',' ') }}{% else %}None{% endif %}</small></div></div>
+    </div>
+    <div class="alert alert-light border small mt-3 mb-0">Pattern Memory is evidence support, not a supplier rating or blacklist. It only compares prior synthetic cases for the same supplier and item.</div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card mb-4 shadow-sm border-0"><div class="card-header bg-white fw-semibold py-3">Supplier evidence</div><div class="card-body"><blockquote class="mb-0">“{{ case.supplier_message }}”</blockquote></div></div>
+    <div class="card mb-4 shadow-sm border-0"><div class="card-header bg-white fw-semibold py-3">Connected records</div><div class="card-body"><div class="row g-3">
+      <div class="col-md-4"><div class="evidence-box"><span>Purchase order</span><strong>{{ case.purchase_order.quantity }} {{ case.purchase_order.unit }}</strong><small>RM{{ '%.2f'|format(case.purchase_order.unit_price) }} / {{ case.purchase_order.unit }}</small></div></div>
+      <div class="col-md-4"><div class="evidence-box"><span>Received</span><strong>{{ case.received.quantity }} {{ case.received.unit }}</strong><small>Human-confirmed receiving record</small></div></div>
+      <div class="col-md-4"><div class="evidence-box"><span>Invoice</span><strong>{{ case.invoice.quantity }} {{ case.invoice.unit }}</strong><small>RM{{ '%.2f'|format(case.invoice.unit_price) }} / {{ case.invoice.unit }}</small></div></div>
+    </div></div></div>
+
+    <div class="card mb-4 shadow-sm border-0"><div class="card-header bg-white fw-semibold py-3">Explainable rule check</div><div class="card-body">
+      {% if case.comparison.discrepancies %}{% for d in case.comparison.discrepancies %}<div class="exception-row"><div class="exception-icon">!</div><div><strong>{{ d.type.replace('_',' ') }}</strong><div>{{ d.message }}</div></div></div>{% endfor %}{% else %}<div class="alert alert-success mb-0">All connected records match. OrderGuard avoids unnecessary follow-up.</div>{% endif %}
+      {% if case.comparison.comparison_amount is not none %}<div class="row mt-4 text-center"><div class="col"><div class="small text-secondary">Received × agreed</div><strong>RM{{ '%.2f'|format(case.comparison.comparison_amount) }}</strong></div><div class="col"><div class="small text-secondary">Invoice</div><strong>RM{{ '%.2f'|format(case.comparison.invoice_amount) }}</strong></div><div class="col"><div class="small text-secondary">Difference</div><strong>RM{{ '%.2f'|format(case.comparison.difference) }}</strong></div></div>{% endif %}
+    </div></div>
+
+    <div class="card shadow-sm border-0"><div class="card-header bg-white fw-semibold py-3">Audit trail</div><div class="card-body timeline">{% for item in activity %}<div class="timeline-item"><strong>{{ item.action.replace('_',' ') }}</strong><span>{{ item.actor }}</span><p>{{ item.details }}</p></div>{% endfor %}</div></div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-4 shadow-sm border-0"><div class="card-header bg-white fw-semibold py-3">Owner Resolution Playbook</div><div class="card-body"><ol class="small mb-0 ps-3">{% for step in supplier_insight.playbook %}<li class="mb-2">{{ step }}</li>{% endfor %}</ol></div></div>
+    <div class="card decision-card sticky-top shadow-sm border-0" style="top:1rem"><div class="card-header bg-white fw-semibold py-3">Human control</div><div class="card-body">
+      {% if case.status == 'NEEDS_CLARIFICATION' %}
+        <div class="alert alert-danger small">Trust Gate has stopped the workflow. Confirm the receiving unit/quantity before any consequential action.</div>
+        <form method="post" action="{{ url_for('clarify_case', case_id=case.id) }}"><label class="form-label">Confirmed received quantity</label><input class="form-control mb-2" type="number" step="0.01" name="received_quantity" value="{{ case.received.quantity }}" required><label class="form-label">Confirmed unit</label><input class="form-control mb-3" name="received_unit" value="kg" required><button class="btn btn-dark w-100" type="submit">Confirm & recalculate</button></form>
+      {% elif case.status == 'PENDING_APPROVAL' %}
+        <div class="small text-secondary mb-2">Proposed clarification</div><p>{{ case.proposed_action }}</p><form method="post" action="{{ url_for('approve_case', case_id=case.id) }}" class="mb-3"><button class="btn btn-success w-100" type="submit">Approve clarification</button></form><form method="post" action="{{ url_for('reject_case', case_id=case.id) }}"><label class="form-label small">Reject reason</label><input class="form-control mb-2" name="reason" value="Need supplier call before action"><button class="btn btn-outline-danger w-100" type="submit">Reject</button></form>
+      {% else %}<div class="alert alert-light border mb-0">Workflow state: <strong>{{ case.status.replace('_',' ') }}</strong></div>{% endif %}
+      <hr><p class="small text-secondary mb-0">No real payment or supplier message is sent. The outbox is simulated for the competition prototype.</p>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

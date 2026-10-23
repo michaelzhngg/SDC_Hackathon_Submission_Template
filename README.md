@@ -1,207 +1,189 @@
-> [!IMPORTANT]
-> ## 📁 Submission Documents & Templates
-> **All required submission templates are in the Google Drive folder below. Download them before you start.**
->
-> ### 👉 [**OPEN THE GOOGLE DRIVE FOLDER**](https://drive.google.com/drive/folders/1xw7c2aN8N-at8hPEULzkcU76e_FFb0Ef) 👈
+# Vortex OrderGuard
 
----
+**Check deliveries. Explain discrepancies. Keep owners in control.**
 
-# Project Name
+Vortex OrderGuard is a functional MVP for the SDC Hackathon 2026 Domain 2 — Orbyte Smart SME Challenge. It helps micro and small businesses compare purchase orders, receiving records and supplier invoices, surface explainable exceptions, and keep consequential actions behind human approval.
 
-> A one-sentence description of what your project does and who it is for.
+> **Current MVP status:** Core comparison, Trust Gate, human clarification, owner approval/rejection, simulated outbox, activity log, dashboard analytics, demo scenarios and optional DeepSeek extraction are implemented on the `vortex-orderguard-mvp` branch. Replit deployment and competition submission evidence must still be completed by the team.
 
----
+## Why OrderGuard
 
-## Team Information
+Small businesses often reconcile supplier messages, purchase orders, deliveries and invoices manually. A shortage, wrong unit or price change can be missed when records live in different places. OrderGuard turns that repeated checking into one reviewable workflow without allowing AI to make the final business decision.
 
-| Field                  | Details                                     |
-| ---------------------- | ------------------------------------------- |
-| **Team Name**          | Your Team Name                              |
-| **Team Domain**        | Domain 1 / Domain 2 *(choose one)*          |
-| **SDG Track (1–17)**   | e.g. SDG 11 — Sustainable Cities and Communities |
-| **Team Leader**        | Leader Name                                 |
-| **University**         | University Name(s)                          |
-| **Number of Members**  | e.g. 4                                      |
+## Core Journey
 
-## Links
+1. **Trigger** — staff submits supplier evidence and connected purchasing records.
+2. **Connected data** — purchase order, receiving record and invoice are compared together.
+3. **Decision logic** — deterministic rules identify quantity, invoice-quantity, price and unit exceptions.
+4. **Trust Gate** — a transparent rules-based score shows whether the case is clear, reviewable or blocked.
+5. **Human control** — ambiguous units must be clarified by a person; consequential supplier clarification requires owner approval.
+6. **Visible outcome** — approved clarification enters a simulated outbox and every step is recorded in the audit trail.
 
-| Resource          | Link                                           |
-| ----------------- | ---------------------------------------------- |
-| GitHub Repository | https://github.com/your-username/your-project  |
-| Replit Project    | https://replit.com/@your-username/your-project |
-| Live Demo         | https://your-project.replit.app                |
-| RunPod Endpoint   | https://api.runpod.ai/v2/your-endpoint-id      |
-| Slide Deck        | https://example.com/slides                     |
-| Demo Video        | https://example.com/demo-video                 |
+## Innovation: OrderGuard Trust Gate
 
----
+The Trust Gate is a reusable safety layer between automation and action.
 
-## Overview
+- `CLEAR` — records match; no supplier action is needed.
+- `REVIEW` — records are comparable but discrepancies require owner review.
+- `BLOCKED` — data is ambiguous or incompatible, so approval is disabled until a person clarifies it.
 
-### Problem
+The Trust Gate score is a deterministic heuristic, **not an AI confidence probability**. This makes the reasoning easy to explain to judges and keeps the owner in control.
 
-Describe the real-world problem you are solving in 2–4 sentences. Who is affected, and why does it matter?
+## Judge Demo Scenarios
 
-### Solution
+The dashboard includes three one-click synthetic scenarios:
 
-Explain how your project uses AI to solve the problem and what makes it valuable.
+| Scenario | What it demonstrates |
+| --- | --- |
+| Discrepancy | 10 kg chicken ordered at RM12/kg, 8 kg received, invoice at RM13/kg |
+| Ambiguous unit | PO/invoice use kg while receiving says “bags”; Trust Gate blocks approval |
+| Clean match | Connected records match and the system avoids unnecessary follow-up |
 
-### Key Features
+For the ambiguous-unit case, confirm the receiving quantity/unit to demonstrate **blocked → human clarification → recalculation → owner review**.
 
-- **Feature 1** — Short description.
-- **Feature 2** — Short description.
-- **Feature 3** — Short description.
+## Implemented MVP Features
 
-### Tech Stack
+- Evidence-linked quantity and price discrepancy detection
+- Invoice quantity checks
+- Human clarification for incompatible/missing units
+- Explainable Trust Gate with `CLEAR`, `REVIEW` and `BLOCKED` states
+- Owner-only approval/rejection for consequential actions
+- Duplicate-approval protection using a unique outbox case constraint
+- Simulated supplier outbox (no real messages/payments)
+- Activity/audit history
+- Dashboard case metrics and exception pulse
+- Three one-click judge demo scenarios
+- Optional DeepSeek supplier-message extraction
+- Manual fallback when AI is unavailable
+- Human confirmation of AI-extracted fields before rule evaluation
+- SQLite demonstration storage
+- Responsive Flask/Bootstrap UI
 
-| Layer         | Technology                   |
-| ------------- | ---------------------------- |
-| Frontend      | e.g. HTML, React             |
-| Backend       | e.g. Python, Flask / FastAPI |
-| Database      | e.g. PostgreSQL, SQLite      |
-| AI / Compute  | RunPod (GPU)                 |
-| Hosting / Dev | Replit                       |
+## AI Design
 
----
+AI is used only where it adds value: converting informal supplier text into structured suggestions such as item, quantity, unit and price. It does **not** calculate discrepancies, approve actions, infer unit conversions or send supplier messages.
 
-## Project Structure
+The application currently supports DeepSeek through `DEEPSEEK_API_KEY`. If no key is configured, users continue with the manual structured fields.
 
-```
-.
-├── docs/                    # Screenshots, diagrams
-├── runpod/
-│   └── handler.py           # RunPod serverless handler (GPU workload)
-├── src/
-│   ├── main.py              # Application entry point
-│   └── utils.py             # Helper functions
-├── submission/              # Required submission documents
-│   ├── SDC2026_TeamName_Preliminary.pdf      # Preliminary submission
-│   ├── SDC2026_TeamName_TechDeclaration.pdf  # Technology declaration
-│   ├── SDC2026_TeamName_Replit_POU.pdf       # Replit proof of use
-│   └── SDC2026_TeamName_Runpod_POU.pdf       # RunPod proof of use
-├── tests/
-│   └── test_utils.py        # Unit tests
-├── .env.example             # Example environment variables
-├── .gitignore
-├── .replit                  # Replit run configuration
-├── LICENSE
-├── requirements.txt         # Python dependencies
-└── README.md
-```
+## Architecture
 
-### Architecture
-
-```
-User ──► Replit (App / API) ──► RunPod Endpoint (GPU model)
-                │
-                └──► Response returned to user
+```text
+Supplier message / records
+          |
+          v
+Flask web UI ---- optional DeepSeek extraction
+          |
+          v
+Human-confirmed structured fields
+          |
+          v
+Deterministic discrepancy engine
+          |
+          v
+OrderGuard Trust Gate
+      /        \
+ BLOCKED      REVIEW
+    |            |
+Human clarify  Owner approve/reject
+    |            |
+    +--> Recalculate
+                 |
+                 v
+       Simulated outbox + audit log
+                 |
+              SQLite
 ```
 
----
+## Run Locally / Replit
 
-## How to Run
-
-### Option 1 — Run on Replit (Recommended)
-
-1. Open the [Replit Project](https://replit.com/@your-username/your-project), or import this repository via **Create Repl → Import from GitHub**.
-2. Open the **Secrets** tab (🔒) and add the variables listed in `.env.example`:
-   - `RUNPOD_API_KEY`
-   - `RUNPOD_ENDPOINT_ID`
-3. Click **Run**. Replit uses the `.replit` file to start `python src/main.py`.
-
-### Option 2 — Run Locally
+Install dependencies:
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/your-username/your-project.git
-cd your-project
-
-# 2. Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-
-# 3. Install dependencies
 pip install -r requirements.txt
+```
 
-# 4. Configure environment variables
-cp .env.example .env            # then fill in your values
+Run:
 
-# 5. Run the app
+```bash
 python src/main.py
 ```
 
-### Run Tests
+Then open the URL provided by Replit, or locally open `http://127.0.0.1:5000`.
 
-```bash
-python -m unittest discover tests
+### Replit Secrets
+
+Do not commit real keys. Configure these through Replit Secrets when used:
+
+```text
+DEEPSEEK_API_KEY=...
+FLASK_SECRET_KEY=...
 ```
 
----
+Optional:
 
-## How We Use Replit *(Required)*
-
-Describe how your team used Replit. For example:
-
-- **Development:** Collaborative coding in a shared Repl using Multiplayer.
-- **Hosting:** The app is deployed with Replit Deployments at the Live Demo link above.
-- **Secrets:** API keys are stored in Replit Secrets, never in the code.
-
-📄 Proof of use: [`submission/SDC2026_TeamName_Replit_POU.pdf`](submission/SDC2026_TeamName_Replit_POU.pdf)
-
-## How We Use RunPod *(Required)*
-
-Describe how your team used RunPod. For example:
-
-- **Workload:** Model inference (e.g. text generation, image processing) runs on a RunPod GPU.
-- **Setup:** `runpod/handler.py` is deployed as a **RunPod Serverless Endpoint**.
-- **Integration:** The Replit app sends requests to the endpoint using `RUNPOD_API_KEY` and `RUNPOD_ENDPOINT_ID`.
-
-Example request:
-
-```bash
-curl -X POST https://api.runpod.ai/v2/$RUNPOD_ENDPOINT_ID/runsync \
-  -H "Authorization: Bearer $RUNPOD_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"input": {"prompt": "Hello"}}'
+```text
+DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_API_URL=https://api.deepseek.com/chat/completions
 ```
 
-📄 Proof of use: [`submission/SDC2026_TeamName_Runpod_POU.pdf`](submission/SDC2026_TeamName_Runpod_POU.pdf)
+## Tests
 
----
+Run:
 
-## Challenges & Learnings
+```bash
+python -m unittest discover -s tests -v
+```
 
-- What challenges did you face, and how did you overcome them?
-- What did your team learn?
+Coverage includes matching records, quantity/price discrepancies, ambiguous units, Trust Gate blocking, human clarification, owner-only approval, rejection, and duplicate-action protection.
 
-## Future Improvements
+## Safety and Competition Boundaries
 
-- [ ] Improvement 1
-- [ ] Improvement 2
+- Synthetic demo business data only
+- No real payment processing
+- No statutory filing
+- No legal or financial advice
+- No live WhatsApp/Orbyte integration claimed
+- Roles and Orbyte interfaces are simulated for the MVP
+- No API keys or credentials should be committed
+- RunPod is only required if the team uses GPU training, fine-tuning or GPU inference
 
-## Team
+## Orbyte Fit
 
-| Name        | Role                | GitHub                                   |
-| ----------- | ------------------- | ---------------------------------------- |
-| Member Name | Team Lead / Backend | [@username](https://github.com/username) |
-| Member Name | Frontend            | [@username](https://github.com/username) |
-| Member Name | AI / RunPod         | [@username](https://github.com/username) |
+OrderGuard is designed as a reusable purchasing-exception module within a shared business hub. In a production Orbyte integration, upstream services could provide purchase orders, supplier records and role information, while OrderGuard would return discrepancy cases, approval decisions and audit events. The MVP uses team-created interface assumptions and does not claim access to live Orbyte APIs.
 
----
+## Validation Still Required
 
-## Submission Checklist
+The team still needs to complete real SME problem validation and measure a defensible baseline/KPI for the official preliminary proposal. Do not present estimated time savings as measured results.
 
-- [ ] Team name, domain (Domain 1 / Domain 2) and SDG track filled in
-- [ ] Slide deck link added
-- [ ] Demo video link added
-- [ ] Replit used, with proof of use in `submission/`
-- [ ] RunPod used, with proof of use in `submission/`
-- [ ] Preliminary submission completed (`SDC2026_TeamName_Preliminary.pdf`)
-- [ ] Technology declaration completed (`SDC2026_TeamName_TechDeclaration.pdf`)
-- [ ] Submission files renamed with your team name (replace `TeamName`)
-- [ ] "How to Run" steps verified
-- [ ] No API keys or secrets committed to the repository
+Suggested measurements:
+
+- Manual check time vs prototype check time
+- Known discrepancy detection rate
+- False-alert count on matching records
+- First-time-user task completion
+- Approval-control and duplicate-action tests
+
+## Submission Status
+
+Still required before the preliminary deadline:
+
+- Complete official `SDC2026_Vortex_Preliminary.pdf`
+- Complete `SDC2026_Vortex_TechDeclaration.pdf`
+- Deploy through the team's Replit account and retain proof of use
+- Add the official Replit/live prototype link
+- Prepare pitch deck
+- Record 5–7 minute YouTube pitch with prototype demo
+- Verify team details, workshop completion, eligibility and declarations
+- Verify all public links in an incognito window
+
+See `docs/VORTEX_SUBMISSION_GUIDE.md` for the detailed requirement mapping.
+
+## Technical & AI Disclosure
+
+The project has used ChatGPT for substantial ideation, documentation and development assistance and this must be disclosed accurately in the Technical & Tools Declaration. The team remains responsible for reviewing, understanding, testing and adapting all generated material. The competition requires the team's own problem framing, solution decisions and explainability; the team should validate the SME problem and document its own decisions before submission.
+
+This repository is based on the official SDC Hackathon Submission Template and retains its Apache License 2.0.
 
 ## License
 
-This project is licensed under the [Apache License 2.0](LICENSE).
+Apache License 2.0 — see [LICENSE](LICENSE).

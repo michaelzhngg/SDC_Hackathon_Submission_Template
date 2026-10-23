@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}New Check · Vortex OrderGuard{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="mb-4">
+      <h1 class="h3">New supplier check</h1>
+      <p class="text-secondary">Use synthetic demo records. OrderGuard will compare the evidence and remember repeat issues for the same supplier and item.</p>
+    </div>
+    <form method="post" class="card shadow-sm">
+      <div class="card-body p-4">
+        <div class="row g-3 mb-4">
+          <div class="col-md-5">
+            <label class="form-label fw-semibold">Supplier name</label>
+            <input class="form-control" name="supplier_name" value="FreshFarm Foods" required>
+            <div class="form-text">Used only for synthetic Pattern Memory in this prototype.</div>
+          </div>
+          <div class="col-md-7">
+            <label class="form-label fw-semibold">Item</label>
+            <input id="item" class="form-control" name="item" value="Chicken" required>
+            <div class="form-text">Repeat detection matches the same supplier + item.</div>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label fw-semibold">Supplier message</label>
+          <textarea id="supplier_message" class="form-control" rows="3" name="supplier_message" required>Delivered 8 kg chicken. Invoice 10 kg at RM13/kg.</textarea>
+          <div class="d-flex align-items-center gap-2 mt-2">
+            <button id="extractButton" class="btn btn-sm btn-outline-primary" type="button">AI extract message</button>
+            <span id="extractStatus" class="small text-secondary">AI suggestions must be confirmed by a person.</span>
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+              <h2 class="h6">Purchase order</h2>
+              <label class="form-label">Quantity</label><input class="form-control mb-2" type="number" step="0.01" name="po_quantity" value="10" required>
+              <label class="form-label">Unit</label><input class="form-control mb-2" name="po_unit" value="kg" required>
+              <label class="form-label">Agreed unit price (RM)</label><input class="form-control" type="number" step="0.01" name="po_price" value="12" required>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+              <h2 class="h6">Receiving record</h2>
+              <label class="form-label">Quantity received</label><input id="received_quantity" class="form-control mb-2" type="number" step="0.01" name="received_quantity" value="8" required>
+              <label class="form-label">Unit</label><input id="received_unit" class="form-control" name="received_unit" value="kg" required>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+              <h2 class="h6">Supplier invoice</h2>
+              <label class="form-label">Invoice quantity</label><input id="invoice_quantity" class="form-control mb-2" type="number" step="0.01" name="invoice_quantity" value="10" required>
+              <label class="form-label">Unit</label><input id="invoice_unit" class="form-control mb-2" name="invoice_unit" value="kg" required>
+              <label class="form-label">Invoice unit price (RM)</label><input id="invoice_price" class="form-control" type="number" step="0.01" name="invoice_price" value="13" required>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-light border mt-3 mb-0 small">AI only proposes structured values from the supplier message. Staff confirm the fields; discrepancy calculations, Pattern Memory, Trust Gate and permissions are deterministic.</div>
+      </div>
+      <div class="card-footer bg-white d-flex justify-content-between p-3">
+        <a class="btn btn-outline-secondary" href="{{ url_for('dashboard') }}">Cancel</a>
+        <button class="btn btn-primary" type="submit">Check records</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+const button = document.getElementById('extractButton');
+const status = document.getElementById('extractStatus');
+button.addEventListener('click', async () => {
+  button.disabled = true;
+  status.textContent = 'Extracting…';
+  try {
+    const response = await fetch('/api/extract', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: document.getElementById('supplier_message').value})
+    });
+    const result = await response.json();
+    if (!result.ok) {
+      status.textContent = result.error;
+      return;
+    }
+    const data = result.data;
+    if (data.item) document.getElementById('item').value = data.item;
+    if (data.quantity !== null && data.quantity !== undefined) {
+      document.getElementById('received_quantity').value = data.quantity;
+    }
+    if (data.unit) {
+      document.getElementById('received_unit').value = data.unit;
+    }
+    if (data.unit_price !== null && data.unit_price !== undefined) {
+      document.getElementById('invoice_price').value = data.unit_price;
+    }
+    status.textContent = 'AI suggestion loaded. Please confirm every field before checking.';
+  } catch (error) {
+    status.textContent = 'AI extraction unavailable. Please use the manual fields.';
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
+{% endblock %}
