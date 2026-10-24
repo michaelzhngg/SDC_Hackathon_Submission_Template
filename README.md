@@ -16,22 +16,22 @@
 
 | Field                  | Details                                     |
 | ---------------------- | ------------------------------------------- |
-| **Team Name**          | Your Team Name                              |
-| **Team Domain**        | Domain 1 / Domain 2 *(choose one)*          |
-| **SDG Track (1–17)**   | e.g. SDG 11 — Sustainable Cities and Communities |
-| **Team Leader**        | Leader Name                                 |
-| **University**         | University Name(s)                          |
-| **Number of Members**  | e.g. 4                                      |
+| **Team Name**          | TerraBotics                                 |
+| **Team Domain**        | Domain 2                                    |
+| **SDG Track (1–17)**   | SDG 8: Decent Work and Economic Growth and SDG 9: Industry, Innovation and Infrastructure |
+| **Team Leader**        | Lo Yu Ao                                    |
+| **University**         | Xiamen University Malaysia                  |
+| **Number of Members**  | 4                                           |
 
 ## Links
 
 | Resource          | Link                                           |
 | ----------------- | ---------------------------------------------- |
-| GitHub Repository | https://github.com/your-username/your-project  |
-| Live Demo         | https://your-project.replit.app                |
-| RunPod Endpoint   | https://api.runpod.ai/v2/your-endpoint-id      |
-| Slide Deck        | https://example.com/slides                     |
-| Demo Video        | https://example.com/demo-video                 |
+| GitHub Repository | https://github.com/your-username/your-project  | notyet
+| Live Demo         | https://your-project.replit.app                | notyet
+| RunPod Endpoint   | https://api.runpod.ai/v2/your-endpoint-id      | notyet
+| Slide Deck        | https://example.com/slides                     | notyet
+| Demo Video        | https://example.com/demo-video                 | notyet
 
 ---
 
@@ -39,27 +39,28 @@
 
 ### Problem
 
-Describe the real-world problem you are solving in 2–4 sentences. Who is affected, and why does it matter?
+As traditional shopping shifts toward online platforms, Malaysian SMEs struggle to manage inventory, relying on disconnected spreadsheets, paper records, and WhatsApp messages. Without automated tracking, staff frequently overlook depleting stock counts leading to sudden stockouts, while items left sitting in storage expire or degrade. This serious problem drains SME cash flow, creates avoidable material waste, and causes burnout for owners and staff spending evenings on repetitive manual tracking.
 
 ### Solution
 
-Explain how your project uses AI to solve the problem and what makes it valuable.
+Built using Replit within the Orbyte ecosystem, our web application provides an intuitive inventory management and automated replenishment module that automatically deducts sold quantities from live inventory. As stock levels change, the platform continuously monitors inventory health to trigger alerts for low or aging stock, integrating AI predictive modeling to forecast sales and calculate optimal replenishment quantities. To ensure people stay in control, the system requires explicit human approval for AI suggestions, combining SDC Phase 1 skills to prevent costly stockouts and expiration waste without complex staff training.
 
 ### Key Features
 
-- **Feature 1** — Short description.
-- **Feature 2** — Short description.
-- **Feature 3** — Short description.
+- **Feature 1** — Visual Inventory Management.
+- **Feature 2** — AI Prediction for sales in future days.
+- **Feature 3** — Provide user to order, Inbound and Outbound products more conviniently.
 
 ### Tech Stack
 
-| Layer         | Technology                   |
-| ------------- | ---------------------------- |
-| Frontend      | e.g. HTML, React             |
-| Backend       | e.g. Python, Flask / FastAPI |
-| Database      | e.g. PostgreSQL, SQLite      |
-| AI / Compute  | RunPod (GPU)                 |
-| Hosting / Dev | Replit                       |
+| Layer         | Technology                     |
+| ------------- | ------------------------------ |
+| Frontend      | TypeScript, Vite, Tailwind CSS,|
+|               | TanStack Query, Wouter         |
+| Backend       | TypeScript, Express 5          |
+| Database      | SQLite                         |
+| AI / Compute  | RunPod (GPU)                   |
+| Hosting / Dev | Replit                         |
 
 ---
 
